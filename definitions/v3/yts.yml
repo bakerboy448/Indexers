@@ -10,7 +10,7 @@ links:
   - https://yts.mx/
   - https://yts.unblockit.kim/
   - https://yts.unblockninja.com/
-  - https://yts.nocensor.work/
+  - https://yts.nocensor.biz/
 legacylinks:
   - https://yts.ag/
   - https://yts.am/
@@ -27,6 +27,7 @@ legacylinks:
   - https://yts.unblockit.li/
   - https://yts.unblockit.ws/
   - https://yts.nocensor.space/
+  - https://yts.nocensor.work/
 
 caps:
   categorymappings:
@@ -95,7 +96,7 @@ search:
       selector: hash
     poster:
       selector: ..large_cover_image
-    imdb:
+    imdbid:
       selector: ..imdb_code
     date:
       selector: date_uploaded_unix
