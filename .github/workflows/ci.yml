@@ -13,10 +13,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: yamllint version
-      run: |
-        yamllint --version
-    - name: yamllint run
-      run: |
-        yamllint definitions --format github
+      - uses: actions/checkout@v2
+      - name: yamllint version
+        run: |
+          yamllint --version
+      - name: yamllint run
+        run: |
+          for f in `find definitions -type f`
+          do
+            echo "$f"
+            yamllint "$f" --format github
+          done
