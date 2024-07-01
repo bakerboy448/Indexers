@@ -1,41 +1,20 @@
 ---
-id: polishtorrent
-name: Polish Torrent
-description: "Polish Torrent (PTT) is a POLISH Private Torrent Tracker for MOVIES / TV / GENERAL"
-language: pl-PL
+id: leech24-api
+name: leech24 (API)
+description: "leech24 is a Private Torrent Tracker for MOVIES / TV / GENERAL"
+language: en-US
 type: private
 encoding: UTF-8
 links:
-  - https://polishtorrent.top/
+  - https://leech24.net/
 
 caps:
   categorymappings:
-    - {id: 6, cat: PC/0day, desc: "Aplikacje/Programy"}
-    - {id: 4, cat: TV/Anime, desc: "Bajki/Anime"}
-    - {id: 1, cat: Movies/HD, desc: "Filmy HD"}
-    - {id: 13, cat: Movies/DVD, desc: "DVD5/9"}
-    - {id: 12, cat: Movies/BluRay, desc: "BD25/50_5/9"}
-    - {id: 14, cat: Movies/3D, desc: "Filmy 3D"}
-    - {id: 16, cat: Movies/SD, desc: "Filmy SD"}
-    - {id: 17, cat: Movies/Other, desc: "Filmy inne"}
-    - {id: 15, cat: TV/Documentary, desc: "Dokumentalne"}
-    - {id: 24, cat: PC/Games, desc: "Gry dodatki"}
-    - {id: 5, cat: PC/Games, desc: "Gry pc"}
-    - {id: 10, cat: Console, desc: "Gry Konsole"}
-    - {id: 18, cat: PC/Mobile-Android, desc: "Mobile"}
-    - {id: 19, cat: Other, desc: "Inne"}
-    - {id: 8, cat: Audio, desc: "Muzyka"}
-    - {id: 11, cat: Movies, desc: "Paczki"}
-    - {id: 25, cat: Audio/Audiobook, desc: "Audiobook"}
-    - {id: 20, cat: Books, desc: "Book"}
-    - {id: 27, cat: TV/Other, desc: "Teatr Telewizyjny"}
-    - {id: 21, cat: TV/Sport, desc: "Sport"}
-    - {id: 9, cat: TV/HD, desc: "Seriale HD"}
-    - {id: 22, cat: TV/SD, desc: "Seriale SD"}
-    - {id: 23, cat: Movies/UHD, desc: "Filmy 4K"}
-    - {id: 2, cat: TV/UHD, desc: "TV 4K"}
-    - {id: 28, cat: TV/Documentary, desc: "TV Dokument"}
-    - {id: 7, cat: XXX, desc: "XXX 18+"}
+    - {id: 1, cat: Movies, desc: "Movie"}
+    - {id: 2, cat: TV, desc: "TV"}
+    - {id: 3, cat: Console, desc: "Game"}
+    - {id: 4, cat: Audio, desc: "Music"}
+    - {id: 5, cat: Other, desc: "Misc"}
 
   modes:
     search: [q]
@@ -51,7 +30,7 @@ settings:
   - name: info_key
     type: info
     label: About your API key
-    default: "Find or Generate a new API Token by accessing your <a href=\"https://polishtorrent.top/\" target=\"_blank\">Polish Torrent</a> account <i>My Settings</i> page and clicking on the <b>API Key</b> tab."
+    default: "Find or Generate a new API Token by accessing your <a href=\"https://leech24.net/\" target=\"_blank\">leech24</a> account <i>My Settings</i> page and clicking on the <b>API Key</b> tab."
   - name: freeleech
     type: checkbox
     label: Search freeleech only
@@ -60,17 +39,6 @@ settings:
     type: checkbox
     label: Use filename as title for single file releases
     default: true
-  - name: multilang
-    type: checkbox
-    label: Replace MULTI by another language in release name
-    default: false
-  - name: multilanguage
-    type: select
-    label: Replace MULTI by this language
-    default: POLISH
-    options:
-      POLISH: POLISH
-      MULTI POLISH: MULTI POLISH
   - name: sort
     type: select
     label: Sort requested from site
@@ -87,6 +55,10 @@ settings:
     options:
       desc: desc
       asc: asc
+  - name: info_activity
+    type: info
+    label: Account Inactivity
+    default: "You must log in to the leech24 web site with your browser once every 120 days to prevent your account from getting disabled."
 
 login:
   path: /api/torrents
@@ -140,17 +112,8 @@ search:
       optional: true
     files:
       selector: num_file
-    title_phase1:
-      text: "{{ if and (.Config.single_file_release_use_filename) (eq .Result.files \"1\") (.Result.title_filename) }}{{ .Result.title_filename }}{{ else }}{{ .Result.title_optional }}{{ end }}"
-    title_multilang:
-      text: "{{ .Result.title_phase1 }}"
-      filters:
-        - name: re_replace
-          args: ["(?i)\\b(MULTI(?!.*(?:POLISH|ENGLISH|\\bPL\\b)))\\b", "{{ .Config.multilanguage }}"]
-        - name: re_replace
-          args: ["(?i)\\b(pl)\\b", "POLISH"]
     title:
-      text: "{{ if .Config.multilang }}{{ .Result.title_multilang }}{{ else }}{{ .Result.title_phase1 }}{{ end }}"
+      text: "{{ if and (.Config.single_file_release_use_filename) (eq .Result.files \"1\") (.Result.title_filename) }}{{ .Result.title_filename }}{{ else }}{{ .Result.title_optional }}{{ end }}"
     details:
       selector: details_link
     download:
@@ -172,9 +135,9 @@ search:
       selector: meta.genres
       filters:
         - name: re_replace
-          args: ["(?i)(Akcja i Przygoda)", "Akcja_i_Przygoda"]
+          args: ["(?i)(Science Fiction)", "Science_Fiction"]
         - name: re_replace
-          args: ["(?i)(film TV)", "film_TV"]
+          args: ["(?i)(TV Movie)", "TV_Movie"]
         - name: replace
           args: [" & ", "_&_"]
     description:
@@ -211,7 +174,6 @@ search:
       case:
         False: 1 # normal
         True: 2 # double
-    minimumseedtime:
-      # 7 day (as seconds = 7 x 24 x 60 x 60)
-      text: 604800
-# json UNIT3D 8.0.1 (custom)
+    minimumratio:
+      text: 1.0
+# json UNIT3D 8.1.3

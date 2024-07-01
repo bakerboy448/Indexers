@@ -37,7 +37,7 @@ JACKETT_REMOTE_NAME="z_Jackett"
 ## v7 purged and frozen 2024-04-27
 ## v8 purged and frozen 2024-04-27
 MIN_SCHEMA=9
-MAX_SCHEMA=10
+MAX_SCHEMA=11
 NEW_SCHEMA=$((MAX_SCHEMA + 1))
 NEW_VERS_DIR="definitions/v$NEW_SCHEMA"
 mkdir -p "$NEW_VERS_DIR"
@@ -111,57 +111,67 @@ initialize_script() {
 }
 
 while getopts ":r:b:m:p:c:u:j:R:J:n:" opt; do
-  case ${opt} in
-    r )
-      prowlarr_remote_name=$OPTARG
-      ;;
-    b )
-      prowlarr_target_branch=$OPTARG
-      ;;
-    m )
-      mode_choice=$OPTARG
-      case "$mode_choice" in
-        normal|n|N)
-          is_dev_exec=false
-          ;;
-        development|d|D)
-          is_dev_exec=true
-          log "INFO" "Skipping upstream reset to local. Also Skip checking out the local branch and log an info message."
-          log "INFO" "This will not reset branch from upstream/master and will ONLY checkout the selected branch to use."
-          log "INFO" "This will pause at various debugging points for human review"
-          ;;
+    case ${opt} in
+    r)
+        prowlarr_remote_name=$OPTARG
+        log "DEBUG" "prowlarr_remote_name using argument $prowlarr_remote_name"
+        ;;
+    b)
+        prowlarr_target_branch=$OPTARG
+        log "DEBUG" "prowlarr_target_branch using argument $prowlarr_target_branch"
+        ;;
+    m)
+        mode_choice=$OPTARG
+        log "DEBUG" "mode_choice using argument $mode_choice"
+        case "$mode_choice" in
+        normal | n | N)
+            is_dev_exec=false
+            ;;
+        development | d | D)
+            is_dev_exec=true
+            log "INFO" "Skipping upstream reset to local. Also Skip checking out the local branch and log an info message."
+            log "INFO" "This will not reset branch from upstream/master and will ONLY checkout the selected branch to use."
+            log "INFO" "This will pause at various debugging points for human review"
+            ;;
         *)
-          usage
-          ;;
-      esac
-      ;;
-    p )
-      push_mode=$OPTARG
-      ;;
-    c )
-      PROWLARR_COMMIT_TEMPLATE=$OPTARG
-      ;;
-    u )
-      PROWLARR_REPO_URL=$OPTARG
-      ;;
-    j )
-      JACKETT_REPO_URL=$OPTARG
-      ;;
-    R )
-      PROWLARR_RELEASE_BRANCH=$OPTARG
-      ;;
-    J )
-      JACKETT_BRANCH=$OPTARG
-      ;;
-    n )
-      JACKETT_REMOTE_NAME=$OPTARG
-      ;;
-    \? )
-      usage
-      ;;
-  esac
+            usage
+            ;;
+        esac
+        ;;
+    p)
+        push_mode=$OPTARG
+        log "DEBUG" "push_mode using argument $push_mode"
+        ;;
+    c)
+        PROWLARR_COMMIT_TEMPLATE=$OPTARG
+        log "DEBUG" "PROWLARR_COMMIT_TEMPLATE using argument $PROWLARR_COMMIT_TEMPLATE"
+        ;;
+    u)
+        PROWLARR_REPO_URL=$OPTARG
+        log "DEBUG" "PROWLARR_REPO_URL using argument $PROWLARR_REPO_URL"
+        ;;
+    j)
+        JACKETT_REPO_URL=$OPTARG
+        log "DEBUG" "JACKETT_REPO_URL using argument $JACKETT_REPO_URL"
+        ;;
+    R)
+        PROWLARR_RELEASE_BRANCH=$OPTARG
+        log "DEBUG" "PROWLARR_RELEASE_BRANCH using argument $PROWLARR_RELEASE_BRANCH"
+        ;;
+    J)
+        JACKETT_BRANCH=$OPTARG
+        log "DEBUG" "JACKETT_BRANCH using argument $JACKETT_BRANCH"
+        ;;
+    n)
+        JACKETT_REMOTE_NAME=$OPTARG
+        log "DEBUG" "JACKETT_REMOTE_NAME using argument $JACKETT_REMOTE_NAME"
+        ;;
+    \?)
+        usage
+        ;;
+    esac
 done
-shift $((OPTIND -1))
+shift $((OPTIND - 1))
 
 configure_git() {
     git config advice.statusHints false
@@ -235,7 +245,7 @@ handle_branch_reset() {
     fi
 }
 
-commit_and_push() {
+pull_cherry_and_merge() {
     log "INFO" "Reviewing Commits"
     existing_message=$(git log --format=%B -n1)
     existing_message_ln1=$(echo "$existing_message" | awk 'NR==1')
@@ -300,9 +310,6 @@ commit_and_push() {
     handle_new_indexers
     handle_modified_indexers
     handle_backporting_indexers
-
-    cleanup_and_commit
-    push_changes
 }
 
 resolve_conflicts() {
@@ -517,7 +524,7 @@ cleanup_and_commit() {
 
     git rm -r -f -q --ignore-unmatch --cached node_modules
 
-    log "INFO" "After review; the script will commit the changes."
+    log "INFO" "After review; the script will commit the changes and push as/if specified."
     read -r -p "Press any key to continue or [Ctrl-C] to abort. Waiting for human review..." -n1 -s
     new_commit_msg="$PROWLARR_COMMIT_TEMPLATE $jackett_recent_commit [$(date -u +'%Y-%m-%dT%H:%M:%SZ')]"
 
@@ -537,6 +544,7 @@ cleanup_and_commit() {
 
 push_changes() {
     push_branch="$prowlarr_target_branch"
+    log "INFO" "Pushing Changes to $push_branch as specified by push mode $push_mode"
     case "$push_mode" in
     force)
         git push "$prowlarr_remote_name" "$push_branch" --force-if-includes --force-with-lease
@@ -546,9 +554,12 @@ push_changes() {
         git push "$prowlarr_remote_name" "$push_branch" --force-if-includes
         log "INFO" "Branch Pushed"
         ;;
+    skip | none | nopush | no)
+        log "INFO" "Skipping Push due to [skip|nopush|none|no] value"
+        ;;
     *)
-        log "INFO" "Invalid push mode specified. Exiting."
-        exit 1
+        log "INFO" "Invalid push mode specified ($push_mode). Exiting."
+        exit 2
         ;;
     esac
 }
@@ -558,7 +569,8 @@ main() {
     configure_git
     check_branches
     handle_branch_reset
-    commit_and_push
+    pull_cherry_and_merge
+    cleanup_and_commit
     push_changes
 }
 
